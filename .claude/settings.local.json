@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.mindlogic.ai)",
+      "Bash(curl -sI http://localhost:3000/)",
+      "Bash(curl -s http://localhost:3000/)",
+      "Bash(grep -oE 'class=\"[A-Za-z0-9]{6,8}\"')",
+      "Bash(pnpm add:*)"
+    ]
+  }
+}
