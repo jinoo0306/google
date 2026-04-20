@@ -270,6 +270,7 @@ export default function Home() {
     const trimmed = q.trim();
     // Need either text or image
     if (!trimmed && !imageData) return;
+    const prevAnswer = answer; // 직전 턴 답변을 비우기 전에 포착
     setLoading(true);
     setError('');
     setAnswer('');
@@ -281,6 +282,7 @@ export default function Home() {
           query: trimmed || undefined,
           image: imageData || undefined,
           imageType: imageType || undefined,
+          previousAnswer: prevAnswer || undefined,
         }),
       });
       const data = await res.json();
