@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
     }
 
     const apiKey = process.env.SGLLM_API_KEY;
+    const apiKey2 = process.env.SGLLM_API_KEY_2;
     if (!apiKey) {
       return NextResponse.json({ error: 'API 키가 설정되지 않았습니다.' }, { status: 500 });
     }
@@ -66,19 +67,32 @@ export async function POST(req: NextRequest) {
       ? `한국어로 답변하세요.\n\n아래는 직전 턴에서 당신이 사용자에게 준 답변입니다. 사용자의 이번 질문이 이 답변을 이어받는 후속 질문일 수 있으니, 필요하면 맥락으로 활용해 주세요.\n\n[직전 답변]\n${trimmedPrev}`
       : '한국어로 답변하세요.';
 
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 1500,
-        system: systemPrompt,
-        messages: [{ role: 'user', content }],
-      }),
+    const requestBody = JSON.stringify({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 1500,
+      system: systemPrompt,
+      messages: [{ role: 'user', content }],
     });
+
+    async function callApi(key: string) {
+      return fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${key}`,
+          'Content-Type': 'application/json',
+        },
+        body: requestBody,
+      });
+    }
+
+    let res = await callApi(apiKey);
+
+    // 본 키가 실패하면 세컨드 키로 재시도 (토큰 부족 등 어떤 오류든)
+    if (!res.ok && apiKey2) {
+      const errText = await res.text();
+      console.warn('Primary key failed, retrying with secondary key:', res.status, errText);
+      res = await callApi(apiKey2);
+    }
 
     if (!res.ok) {
       const errText = await res.text();
